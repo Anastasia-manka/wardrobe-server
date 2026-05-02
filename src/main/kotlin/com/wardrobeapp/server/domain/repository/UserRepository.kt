@@ -8,4 +8,5 @@ interface UserRepository {
     fun findById(id: UUID): User?
     fun create(email: String, name: String, gender: String, passwordHash: String): User
     fun delete(id: UUID)
+    fun update(id: UUID, name: String, gender: String): User
 }

@@ -45,6 +45,14 @@ class UserRepositoryImpl : UserRepository {
         Unit
     }
 
+    override fun update(id: UUID, name: String, gender: String): User = transaction {
+        UserTable.update({ UserTable.id eq id }) {
+            it[UserTable.name] = name
+            it[UserTable.gender] = gender
+        }
+        findById(id)!!
+    }
+
     private fun ResultRow.toUser() = User(
         id = this[UserTable.id],
         email = this[UserTable.email],

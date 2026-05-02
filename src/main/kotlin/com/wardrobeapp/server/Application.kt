@@ -17,6 +17,7 @@ import com.wardrobeapp.server.presentation.plugins.configureStatusPages
 import com.wardrobeapp.server.presentation.routing.authRoutes
 import com.wardrobeapp.server.presentation.routing.clothingItemRoutes
 import com.wardrobeapp.server.presentation.routing.outfitRoutes
+import com.wardrobeapp.server.presentation.routing.profileRoutes
 import com.wardrobeapp.server.presentation.routing.referenceRoutes
 import com.wardrobeapp.server.presentation.routing.tripRoutes
 import io.ktor.server.application.*
@@ -49,5 +50,6 @@ fun Application.module() {
         clothingItemRoutes(clothingItemUseCase)
         outfitRoutes(outfitUseCase)
         tripRoutes(tripUseCase)
+        profileRoutes(userRepository)
     }
 }
