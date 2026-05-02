@@ -2,13 +2,30 @@ package com.wardrobeapp.server
 
 import com.wardrobeapp.server.data.db.DatabaseFactory
 import com.wardrobeapp.server.data.db.DatabaseSeeder
-
+import com.wardrobeapp.server.data.repository.UserRepositoryImpl
+import com.wardrobeapp.server.domain.usecase.AuthUseCase
+import com.wardrobeapp.server.presentation.plugins.configureAuth
+import com.wardrobeapp.server.presentation.plugins.configureSerialization
+import com.wardrobeapp.server.presentation.plugins.configureStatusPages
+import com.wardrobeapp.server.presentation.routing.authRoutes
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
+import io.ktor.server.routing.*
 
 fun main(args: Array<String>) = EngineMain.main(args)
 
 fun Application.module() {
     DatabaseFactory.init()
     DatabaseSeeder.seed()
+
+    val userRepository = UserRepositoryImpl()
+    val authUseCase = AuthUseCase(userRepository)
+
+    configureSerialization()
+    configureAuth()
+    configureStatusPages()
+
+    routing {
+        authRoutes(authUseCase)
+    }
 }
