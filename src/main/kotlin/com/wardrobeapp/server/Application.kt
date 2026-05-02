@@ -12,6 +12,7 @@ import com.wardrobeapp.server.domain.usecase.ClothingItemUseCase
 import com.wardrobeapp.server.domain.usecase.OutfitUseCase
 import com.wardrobeapp.server.domain.usecase.TripUseCase
 import com.wardrobeapp.server.presentation.plugins.configureAuth
+import com.wardrobeapp.server.presentation.plugins.configureCors
 import com.wardrobeapp.server.presentation.plugins.configureSerialization
 import com.wardrobeapp.server.presentation.plugins.configureStatusPages
 import com.wardrobeapp.server.presentation.routing.authRoutes
@@ -41,6 +42,7 @@ fun Application.module() {
     val tripUseCase = TripUseCase(tripRepository)
 
     configureSerialization()
+    configureCors()
     configureAuth()
     configureStatusPages()
 
