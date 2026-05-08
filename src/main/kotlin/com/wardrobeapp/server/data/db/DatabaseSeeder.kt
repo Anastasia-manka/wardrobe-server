@@ -10,6 +10,7 @@ import com.wardrobeapp.server.data.db.tables.LuggageTypeTable
 import com.wardrobeapp.server.data.db.tables.MaterialTable
 import com.wardrobeapp.server.data.db.tables.SeasonTable
 import com.wardrobeapp.server.data.db.tables.StyleTable
+import com.wardrobeapp.server.data.db.tables.TemplateItemTable
 import com.wardrobeapp.server.data.db.tables.TripTypeTable
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.selectAll
@@ -29,6 +30,7 @@ object DatabaseSeeder {
             seedActivities()
             seedLuggageTypes()
             seedLabels()
+            seedTemplateItems()
         }
     }
 
@@ -153,6 +155,63 @@ object DatabaseSeeder {
             LabelTable.insert {
                 it[name] = labelName
                 it[userId] = null
+            }
+        }
+    }
+
+    private fun seedTemplateItems() {
+        if (TemplateItemTable.selectAll().count() > 0) return
+
+        val items = listOf(
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/топ_1_j5zdku.png", "Топ", Triple("Лето", "Белый", "Хлопок")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/рубашка_голубая_sojmdq.png", "Рубашка", Triple("Круглый год", "Голубой", "Хлопок")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/джинсы_белые_eli29b.png", "Джинсы", Triple("Лето", "Бежевый", "Деним")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/джинсы__vjkmsf.png", "Джинсы", Triple("Лето", "Голубой", "Деним")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/джинсовка_1_ef0pde.png", "Куртка", Triple("Лето", "Голубой", "Деним")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/водолазка_1_psf8ht.png", "Лонгслив", Triple("Зима", "Белый", "Вискоза")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/шорты_1_nac6yt.png", "Шорты", Triple("Лето", "Голубой", "Деним")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/пальто_1_d5jhle.png", "Пальто", Triple("Осень", "Серый", "Шерсть")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/уги_1_ysam5m.png", "Ботинки", Triple("Осень", "Оранжевый", "Шерсть")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/поло_1_b9ihxd.png", "Поло", Triple("Круглый год", "Синий", "Вискоза")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/худи_3_creua6.png", "Худи", Triple("Круглый год", "Серый", "Полиэстер")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/кардиган_1_kdupgc.png", "Кардиган", Triple("Зима", "Серый", "Хлопок")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/худи_2_g8kv0k.png", "Худи", Triple("Круглый год", "Голубой", "Хлопок")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/брюки_1_wvn3ll.png", "Брюки", Triple("Круглый год", "Черный", "Хлопок")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/кардиган_2_aydpl7.png", "Кардиган", Triple("Зима", "Белый", "Шерсть")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/кроссовки_2_owsb84.png", "Кроссовки", Triple("Лето", "Металлик", "Полиэстер")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/кроссовки_3_ukh7mb.png", "Кроссовки", Triple("Лето", "Черный", "Хлопок")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/свитер_1_r4qti1.png", "Свитер", Triple("Зима", "Бежевый", "Шерсть")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/топ_2_nl3pgw.png", "Топ", Triple("Круглый год", "Черный", "Хлопок")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/кроссовки_1_mkylwm.png", "Кроссовки", Triple("Лето", "Белый", "Искусственная кожа")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/рубашка_белая_nm2uno.png", "Рубашка", Triple("Круглый год", "Белый", "Хлопок")),
+            Triple("https://res.cloudinary.com/djrxlxqln/image/upload/худи_1_yvkjm5.png", "Худи", Triple("Круглый год", "Белый", "Хлопок"))
+        )
+
+        items.forEach { (imageUrl, categoryName, props) ->
+            val (seasonName, colorName, materialName) = props
+
+            val categoryId = CategoryTable.selectAll()
+                .where { CategoryTable.name eq categoryName }
+                .single()[CategoryTable.id]
+
+            val seasonId = SeasonTable.selectAll()
+                .where { SeasonTable.name eq seasonName }
+                .single()[SeasonTable.id]
+
+            val colorId = ColorTable.selectAll()
+                .where { ColorTable.name eq colorName }
+                .single()[ColorTable.id]
+
+            val materialId = MaterialTable.selectAll()
+                .where { MaterialTable.name eq materialName }
+                .single()[MaterialTable.id]
+
+            TemplateItemTable.insert {
+                it[TemplateItemTable.imageUrl] = imageUrl
+                it[TemplateItemTable.categoryId] = categoryId
+                it[TemplateItemTable.seasonId] = seasonId
+                it[TemplateItemTable.colorId] = colorId
+                it[TemplateItemTable.materialId] = materialId
             }
         }
     }
