@@ -9,6 +9,9 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.util.UUID
+import com.wardrobeapp.server.data.db.tables.TemplateItemTable
+import org.jetbrains.exposed.sql.transactions.transaction
+import org.jetbrains.exposed.sql.selectAll
 
 fun Route.clothingItemRoutes(clothingItemUseCase: ClothingItemUseCase) {
     authenticate("auth-jwt") {
@@ -39,6 +42,22 @@ fun Route.clothingItemRoutes(clothingItemUseCase: ClothingItemUseCase) {
             val labelId = call.request.queryParameters["labelId"]?.let { UUID.fromString(it) }
             val items = clothingItemUseCase.getAll(userId, categoryId, seasonId, colorId, materialId, labelId)
             call.respond(HttpStatusCode.OK, items.map { it.toResponse() })
+        }
+
+        get("/items/templates") {
+            val items = transaction {
+                TemplateItemTable.selectAll().map {
+                    TemplateItemResponse(
+                        id = it[TemplateItemTable.id].toString(),
+                        imageUrl = it[TemplateItemTable.imageUrl],
+                        categoryId = it[TemplateItemTable.categoryId].toString(),
+                        seasonId = it[TemplateItemTable.seasonId].toString(),
+                        colorId = it[TemplateItemTable.colorId].toString(),
+                        materialId = it[TemplateItemTable.materialId].toString()
+                    )
+                }
+            }
+            call.respond(HttpStatusCode.OK, items)
         }
 
         get("/items/{id}") {

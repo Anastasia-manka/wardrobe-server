@@ -49,3 +49,13 @@ data class FromTemplatesRequest(
 data class AddCompatibilityRequest(
     val compatibleItemId: String
 )
+
+@Serializable
+data class TemplateItemResponse(
+    val id: String,
+    val imageUrl: String,
+    val categoryId: String,
+    val seasonId: String,
+    val colorId: String,
+    val materialId: String
+)
