@@ -37,7 +37,14 @@ data class ClothingItemResponse(
     val materialId: String,
     val storagePlace: String?,
     val comment: String?,
-    val labelIds: List<String>
+    val labels: List<LabelResponse>
+)
+
+@Serializable
+data class LabelResponse(
+    val id: String,
+    val name: String,
+    val isCustom: Boolean
 )
 
 @Serializable

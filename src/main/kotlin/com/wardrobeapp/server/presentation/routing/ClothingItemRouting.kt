@@ -12,6 +12,10 @@ import java.util.UUID
 import com.wardrobeapp.server.data.db.tables.TemplateItemTable
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.selectAll
+import com.wardrobeapp.server.data.db.tables.LabelTable
+
+
+
 
 fun Route.clothingItemRoutes(clothingItemUseCase: ClothingItemUseCase) {
     authenticate("auth-jwt") {
@@ -131,5 +135,16 @@ private fun com.wardrobeapp.server.domain.model.ClothingItem.toResponse() = Clot
     materialId = materialId.toString(),
     storagePlace = storagePlace,
     comment = comment,
-    labelIds = labels.map { it.toString() }
+    labels = labels.map { labelId ->
+        val row = transaction {
+            LabelTable.selectAll()
+                .where { LabelTable.id eq labelId }
+                .singleOrNull()
+        }
+        LabelResponse(
+            id = labelId.toString(),
+            name = row?.get(LabelTable.name) ?: "",
+            isCustom = row?.get(LabelTable.userId) != null
+        )
+    }
 )
