@@ -35,5 +35,6 @@ data class OutfitResponse(
     val userId: String,
     val coverUrl: String,
     val styleId: String,
+    val styleName: String,
     val items: List<OutfitItemResponse>
 )

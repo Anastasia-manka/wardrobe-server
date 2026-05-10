@@ -1,5 +1,6 @@
 package com.wardrobeapp.server.presentation.routing
 
+import com.wardrobeapp.server.data.db.tables.StyleTable
 import com.wardrobeapp.server.domain.usecase.OutfitUseCase
 import com.wardrobeapp.server.presentation.dto.*
 import io.ktor.http.*
@@ -8,6 +9,8 @@ import io.ktor.server.auth.jwt.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import java.util.UUID
 
 fun Route.outfitRoutes(outfitUseCase: OutfitUseCase) {
@@ -72,16 +75,26 @@ fun Route.outfitRoutes(outfitUseCase: OutfitUseCase) {
     }
 }
 
-private fun com.wardrobeapp.server.domain.model.Outfit.toResponse() = OutfitResponse(
-    id = id.toString(),
-    userId = userId.toString(),
-    coverUrl = coverUrl,
-    styleId = styleId.toString(),
-    items = items.map {
-        OutfitItemResponse(
-            id = it.id.toString(),
-            itemId = it.itemId.toString(),
-            position = it.position
-        )
+private fun com.wardrobeapp.server.domain.model.Outfit.toResponse(): OutfitResponse {
+    val styleName = transaction {
+        StyleTable
+            .selectAll()
+            .where { StyleTable.id eq styleId }
+            .singleOrNull()
+            ?.get(StyleTable.name) ?: ""
     }
-)
+    return OutfitResponse(
+        id = id.toString(),
+        userId = userId.toString(),
+        coverUrl = coverUrl,
+        styleId = styleId.toString(),
+        styleName = styleName,
+        items = items.map {
+            OutfitItemResponse(
+                id = it.id.toString(),
+                itemId = it.itemId.toString(),
+                position = it.position
+            )
+        }
+    )
+}
