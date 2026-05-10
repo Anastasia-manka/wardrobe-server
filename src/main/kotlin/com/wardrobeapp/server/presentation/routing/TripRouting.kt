@@ -9,6 +9,8 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.util.UUID
+import com.wardrobeapp.server.domain.model.Trip
+import com.wardrobeapp.server.domain.model.TripItem
 
 fun Route.tripRoutes(tripUseCase: TripUseCase) {
     authenticate("auth-jwt") {
@@ -73,6 +75,8 @@ fun Route.tripRoutes(tripUseCase: TripUseCase) {
             call.respond(HttpStatusCode.Created, TripItemResponse(
                 id = item.id.toString(),
                 itemId = item.itemId.toString(),
+                imageUrl = item.imageUrl,
+                categoryName = item.categoryName,
                 isPacked = item.isPacked
             ))
         }
@@ -96,19 +100,26 @@ fun Route.tripRoutes(tripUseCase: TripUseCase) {
     }
 }
 
-private fun com.wardrobeapp.server.domain.model.Trip.toResponse() = TripResponse(
+private fun Trip.toResponse() = TripResponse(
     id = id.toString(),
     userId = userId.toString(),
     name = name,
     tripDate = tripDate,
     tripTypeId = tripTypeId.toString(),
+    tripTypeName = tripTypeName,
     climateId = climateId.toString(),
+    climateName = climateName,
     luggageTypeId = luggageTypeId.toString(),
-    activityIds = activityIds.map { it.toString() },
+    luggageTypeName = luggageTypeName,
+    activities = activityIds.zip(activityNames).map { (id, name) ->
+        ReferenceItemResponse(id = id.toString(), name = name)
+    },
     items = items.map {
         TripItemResponse(
             id = it.id.toString(),
             itemId = it.itemId.toString(),
+            imageUrl = it.imageUrl,
+            categoryName = it.categoryName,
             isPacked = it.isPacked
         )
     }

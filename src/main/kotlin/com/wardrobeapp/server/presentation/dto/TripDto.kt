@@ -36,6 +36,8 @@ data class UpdateTripItemRequest(
 data class TripItemResponse(
     val id: String,
     val itemId: String,
+    val imageUrl: String,
+    val categoryName: String,
     val isPacked: Boolean
 )
 
@@ -46,8 +48,16 @@ data class TripResponse(
     val name: String,
     val tripDate: String,
     val tripTypeId: String,
+    val tripTypeName: String,
     val climateId: String,
+    val climateName: String,
     val luggageTypeId: String,
-    val activityIds: List<String>,
+    val luggageTypeName: String,
+    val activities: List<ReferenceItemResponse>,
     val items: List<TripItemResponse>
+)
+@Serializable
+data class ReferenceItemResponse(
+    val id: String,
+    val name: String
 )

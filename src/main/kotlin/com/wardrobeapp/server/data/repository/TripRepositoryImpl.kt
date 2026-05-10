@@ -88,12 +88,26 @@ class TripRepositoryImpl : TripRepository {
     }
 
     override fun addItem(tripId: UUID, itemId: UUID): TripItem = transaction {
-        val id = TripItemTable.insert {
+        TripItemTable.insert {
             it[TripItemTable.tripId] = tripId
             it[TripItemTable.itemId] = itemId
             it[isPacked] = false
-        } get TripItemTable.id
-        TripItem(id = id, itemId = itemId, isPacked = false)
+        }
+        (TripItemTable innerJoin ClothingItemTable innerJoin CategoryTable)
+            .selectAll()
+            .where {
+                (TripItemTable.tripId eq tripId) and (TripItemTable.itemId eq itemId)
+            }
+            .single()
+            .let {
+                TripItem(
+                    id = it[TripItemTable.id],
+                    itemId = it[TripItemTable.itemId],
+                    imageUrl = it[ClothingItemTable.imageUrl],
+                    categoryName = it[CategoryTable.name],
+                    isPacked = it[TripItemTable.isPacked]
+                )
+            }
     }
 
     override fun updateItemPacked(tripId: UUID, itemId: UUID, isPacked: Boolean) = transaction {
@@ -114,29 +128,57 @@ class TripRepositoryImpl : TripRepository {
 
     private fun ResultRow.toTrip(): Trip {
         val id = this[TripTable.id]
-        val activityIds = TripActivityTable
+
+        val activityRows = (TripActivityTable innerJoin ActivityTable)
             .selectAll()
             .where { TripActivityTable.tripId eq id }
-            .map { it[TripActivityTable.activityId] }
-        val items = TripItemTable
+            .toList()
+
+        val items = (TripItemTable innerJoin ClothingItemTable innerJoin CategoryTable)
             .selectAll()
             .where { TripItemTable.tripId eq id }
             .map {
                 TripItem(
                     id = it[TripItemTable.id],
                     itemId = it[TripItemTable.itemId],
+                    imageUrl = it[ClothingItemTable.imageUrl],
+                    categoryName = it[CategoryTable.name],
                     isPacked = it[TripItemTable.isPacked]
                 )
             }
+
+        val tripTypeId = this[TripTable.tripTypeId]
+        val climateId = this[TripTable.climateId]
+        val luggageTypeId = this[TripTable.luggageTypeId]
+
+        val tripTypeName = TripTypeTable
+            .selectAll()
+            .where { TripTypeTable.id eq tripTypeId }
+            .single()[TripTypeTable.name]
+
+        val climateName = ClimateTable
+            .selectAll()
+            .where { ClimateTable.id eq climateId }
+            .single()[ClimateTable.name]
+
+        val luggageTypeName = LuggageTypeTable
+            .selectAll()
+            .where { LuggageTypeTable.id eq luggageTypeId }
+            .single()[LuggageTypeTable.name]
+
         return Trip(
             id = id,
             userId = this[TripTable.userId],
             name = this[TripTable.name],
             tripDate = this[TripTable.tripDate].toString(),
-            tripTypeId = this[TripTable.tripTypeId],
-            climateId = this[TripTable.climateId],
-            luggageTypeId = this[TripTable.luggageTypeId],
-            activityIds = activityIds,
+            tripTypeId = tripTypeId,
+            tripTypeName = tripTypeName,
+            climateId = climateId,
+            climateName = climateName,
+            luggageTypeId = luggageTypeId,
+            luggageTypeName = luggageTypeName,
+            activityIds = activityRows.map { it[TripActivityTable.activityId] },
+            activityNames = activityRows.map { it[ActivityTable.name] },
             items = items
         )
     }
