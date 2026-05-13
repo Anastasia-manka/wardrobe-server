@@ -188,6 +188,14 @@ class ClothingItemRepositoryImpl : ClothingItemRepository {
             .map { it.toClothingItem() }
     }
 
+    override fun deleteCompatibility(itemId: UUID, compatibleItemId: UUID) = transaction {
+        ItemCompatibilityTable.deleteWhere {
+            (ItemCompatibilityTable.itemId eq itemId) and
+                    (ItemCompatibilityTable.compatibleItemId eq compatibleItemId)
+        }
+        Unit
+    }
+
     private fun ResultRow.toClothingItem(): ClothingItem {
         val id = this[ClothingItemTable.id]
         val labels = ItemLabelTable

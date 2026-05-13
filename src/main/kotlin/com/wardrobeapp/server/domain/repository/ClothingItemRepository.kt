@@ -41,4 +41,5 @@ interface ClothingItemRepository {
     fun findCompatible(itemId: UUID, categoryGroupId: UUID?): List<ClothingItem>
     fun addCompatibility(itemId: UUID, compatibleItemId: UUID)
     fun findByOutfitId(outfitId: UUID): List<ClothingItem>
+    fun deleteCompatibility(itemId: UUID, compatibleItemId: UUID)
 }

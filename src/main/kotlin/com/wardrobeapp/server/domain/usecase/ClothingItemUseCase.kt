@@ -81,4 +81,8 @@ class ClothingItemUseCase(private val repository: ClothingItemRepository) {
         if (item.userId != userId) throw SecurityException("Access denied")
         return repository.findByOutfitId(itemId)
     }
+
+    fun deleteCompatibility(itemId: UUID, compatibleItemId: UUID, userId: UUID) {
+        repository.deleteCompatibility(itemId, compatibleItemId)
+    }
 }

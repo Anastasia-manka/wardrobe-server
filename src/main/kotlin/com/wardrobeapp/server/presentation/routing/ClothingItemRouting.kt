@@ -122,6 +122,13 @@ fun Route.clothingItemRoutes(clothingItemUseCase: ClothingItemUseCase) {
             clothingItemUseCase.addCompatibility(id, UUID.fromString(request.compatibleItemId), userId)
             call.respond(HttpStatusCode.Created)
         }
+        delete("/items/{id}/compatibility/{compatibleItemId}") {
+            val userId = UUID.fromString(call.principal<JWTPrincipal>()!!.payload.subject)
+            val id = UUID.fromString(call.parameters["id"])
+            val compatibleItemId = UUID.fromString(call.parameters["compatibleItemId"])
+            clothingItemUseCase.deleteCompatibility(id, compatibleItemId, userId)
+            call.respond(HttpStatusCode.NoContent)
+        }
     }
 }
 
