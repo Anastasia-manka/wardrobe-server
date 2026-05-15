@@ -48,6 +48,8 @@ dependencies {
     testImplementation(kotlin("test"))
     testImplementation("io.ktor:ktor-server-test-host:$ktorVersion")
     testImplementation("io.mockk:mockk:1.13.10")
+
+    implementation("com.microsoft.onnxruntime:onnxruntime:1.17.0")
 }
 
 tasks.test {

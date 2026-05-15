@@ -13,6 +13,7 @@ object ClothingItemTable : Table("clothing_items") {
     val materialId = uuid("material_id").references(MaterialTable.id)
     val storagePlace = varchar("storage_place", 255).nullable()
     val comment = text("comment").nullable()
+    val embedding = text("embedding").nullable()
     val createdAt = timestamp("created_at")
     override val primaryKey = PrimaryKey(id)
 }

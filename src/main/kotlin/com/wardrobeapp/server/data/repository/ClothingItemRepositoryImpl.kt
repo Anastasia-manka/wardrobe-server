@@ -20,7 +20,8 @@ class ClothingItemRepositoryImpl : ClothingItemRepository {
         materialId: UUID,
         storagePlace: String?,
         comment: String?,
-        labelIds: List<UUID>
+        labelIds: List<UUID>,
+        embedding: String?
     ): ClothingItem = transaction {
         val id = ClothingItemTable.insert {
             it[ClothingItemTable.userId] = userId
@@ -31,6 +32,7 @@ class ClothingItemRepositoryImpl : ClothingItemRepository {
             it[ClothingItemTable.materialId] = materialId
             it[ClothingItemTable.storagePlace] = storagePlace
             it[ClothingItemTable.comment] = comment
+            it[ClothingItemTable.embedding] = embedding
             it[createdAt] = Clock.System.now()
         } get ClothingItemTable.id
 
@@ -214,5 +216,23 @@ class ClothingItemRepositoryImpl : ClothingItemRepository {
             comment = this[ClothingItemTable.comment],
             labels = labels
         )
+    }
+    override fun findSimilar(userId: UUID, queryEmbedding: FloatArray, topN: Int): List<ClothingItem> = transaction {
+        val vectorLiteral = queryEmbedding.joinToString(",", "[", "]")
+        exec(
+            """
+        SELECT id FROM clothing_items
+        WHERE user_id = '$userId'
+        AND embedding IS NOT NULL
+        ORDER BY embedding::vector <=> '$vectorLiteral'::vector
+        LIMIT $topN
+        """.trimIndent()
+        ) { rs ->
+            val ids = mutableListOf<UUID>()
+            while (rs.next()) {
+                ids.add(UUID.fromString(rs.getString("id")))
+            }
+            ids
+        }?.mapNotNull { findById(it) } ?: emptyList()
     }
 }

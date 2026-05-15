@@ -13,7 +13,7 @@ import com.wardrobeapp.server.data.db.tables.TemplateItemTable
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jetbrains.exposed.sql.selectAll
 import com.wardrobeapp.server.data.db.tables.LabelTable
-
+import com.wardrobeapp.server.presentation.dto.toResponse
 
 
 
@@ -131,27 +131,3 @@ fun Route.clothingItemRoutes(clothingItemUseCase: ClothingItemUseCase) {
         }
     }
 }
-
-private fun com.wardrobeapp.server.domain.model.ClothingItem.toResponse() = ClothingItemResponse(
-    id = id.toString(),
-    userId = userId.toString(),
-    imageUrl = imageUrl,
-    categoryId = categoryId.toString(),
-    seasonId = seasonId.toString(),
-    colorId = colorId.toString(),
-    materialId = materialId.toString(),
-    storagePlace = storagePlace,
-    comment = comment,
-    labels = labels.map { labelId ->
-        val row = transaction {
-            LabelTable.selectAll()
-                .where { LabelTable.id eq labelId }
-                .singleOrNull()
-        }
-        LabelResponse(
-            id = labelId.toString(),
-            name = row?.get(LabelTable.name) ?: "",
-            isCustom = row?.get(LabelTable.userId) != null
-        )
-    }
-)

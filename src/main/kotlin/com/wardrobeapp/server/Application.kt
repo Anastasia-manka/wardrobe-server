@@ -11,6 +11,7 @@ import com.wardrobeapp.server.domain.usecase.AuthUseCase
 import com.wardrobeapp.server.domain.usecase.ClothingItemUseCase
 import com.wardrobeapp.server.domain.usecase.OutfitUseCase
 import com.wardrobeapp.server.domain.usecase.TripUseCase
+import com.wardrobeapp.server.ml.EmbeddingService
 import com.wardrobeapp.server.presentation.plugins.configureAuth
 import com.wardrobeapp.server.presentation.plugins.configureCors
 import com.wardrobeapp.server.presentation.plugins.configureSerialization
@@ -21,6 +22,7 @@ import com.wardrobeapp.server.presentation.routing.outfitRoutes
 import com.wardrobeapp.server.presentation.routing.profileRoutes
 import com.wardrobeapp.server.presentation.routing.referenceRoutes
 import com.wardrobeapp.server.presentation.routing.tripRoutes
+import com.wardrobeapp.server.presentation.routing.visualSearchRoutes
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
 import io.ktor.server.routing.*
@@ -31,11 +33,13 @@ fun Application.module() {
     DatabaseFactory.init()
     DatabaseSeeder.seed()
 
+    val embeddingService = EmbeddingService()
+
     val userRepository = UserRepositoryImpl()
     val authUseCase = AuthUseCase(userRepository)
     val referenceRepository = ReferenceRepositoryImpl()
     val clothingItemRepository = ClothingItemRepositoryImpl()
-    val clothingItemUseCase = ClothingItemUseCase(clothingItemRepository)
+    val clothingItemUseCase = ClothingItemUseCase(clothingItemRepository, embeddingService)
     val outfitRepository = OutfitRepositoryImpl()
     val outfitUseCase = OutfitUseCase(outfitRepository)
     val tripRepository = TripRepositoryImpl()
@@ -46,6 +50,10 @@ fun Application.module() {
     configureAuth()
     configureStatusPages()
 
+    environment.monitor.subscribe(ApplicationStopped) {
+        embeddingService.close()
+    }
+
     routing {
         authRoutes(authUseCase)
         referenceRoutes(referenceRepository)
@@ -53,5 +61,6 @@ fun Application.module() {
         outfitRoutes(outfitUseCase)
         tripRoutes(tripUseCase)
         profileRoutes(userRepository)
+        visualSearchRoutes(clothingItemUseCase, embeddingService)
     }
 }

@@ -13,7 +13,8 @@ interface ClothingItemRepository {
         materialId: UUID,
         storagePlace: String?,
         comment: String?,
-        labelIds: List<UUID>
+        labelIds: List<UUID>,
+        embedding: String? = null
     ): ClothingItem
     fun findById(id: UUID): ClothingItem?
     fun findAllByUser(
@@ -42,4 +43,5 @@ interface ClothingItemRepository {
     fun addCompatibility(itemId: UUID, compatibleItemId: UUID)
     fun findByOutfitId(outfitId: UUID): List<ClothingItem>
     fun deleteCompatibility(itemId: UUID, compatibleItemId: UUID)
+    fun findSimilar(userId: UUID, queryEmbedding: FloatArray, topN: Int): List<ClothingItem>
 }

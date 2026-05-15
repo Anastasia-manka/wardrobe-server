@@ -4,7 +4,10 @@ import com.wardrobeapp.server.domain.model.ClothingItem
 import com.wardrobeapp.server.domain.repository.ClothingItemRepository
 import java.util.UUID
 
-class ClothingItemUseCase(private val repository: ClothingItemRepository) {
+class ClothingItemUseCase(
+    private val repository: ClothingItemRepository,
+    private val embeddingService: com.wardrobeapp.server.ml.EmbeddingService
+) {
 
     fun create(
         userId: UUID,
@@ -16,9 +19,22 @@ class ClothingItemUseCase(private val repository: ClothingItemRepository) {
         storagePlace: String?,
         comment: String?,
         labelIds: List<UUID>
-    ): ClothingItem = repository.create(
-        userId, imageUrl, categoryId, seasonId, colorId, materialId, storagePlace, comment, labelIds
-    )
+    ): ClothingItem {
+        val embedding = try {
+            val encodedUrl = imageUrl.replace(" ", "%20")
+            val imageBytes = java.net.URI(encodedUrl).toURL().readBytes()
+            val vector = embeddingService.computeEmbedding(imageBytes)
+            vector.joinToString(",", "[", "]")
+        } catch (e: Exception) {
+            println("Embedding computation failed: ${e.message}")
+            e.printStackTrace()
+            null
+        }
+        return repository.create(
+            userId, imageUrl, categoryId, seasonId, colorId, materialId,
+            storagePlace, comment, labelIds, embedding
+        )
+    }
 
     fun getById(id: UUID, userId: UUID): ClothingItem {
         val item = repository.findById(id) ?: throw NoSuchElementException("Item not found")
@@ -85,4 +101,6 @@ class ClothingItemUseCase(private val repository: ClothingItemRepository) {
     fun deleteCompatibility(itemId: UUID, compatibleItemId: UUID, userId: UUID) {
         repository.deleteCompatibility(itemId, compatibleItemId)
     }
+    fun findSimilar(userId: UUID, queryEmbedding: FloatArray, topN: Int): List<ClothingItem> =
+        repository.findSimilar(userId, queryEmbedding, topN)
 }
