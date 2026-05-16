@@ -235,4 +235,10 @@ class ClothingItemRepositoryImpl : ClothingItemRepository {
             ids
         }?.mapNotNull { findById(it) } ?: emptyList()
     }
+    override fun updateEmbedding(id: UUID, embedding: String) = transaction {
+        ClothingItemTable.update({ ClothingItemTable.id eq id }) {
+            it[ClothingItemTable.embedding] = embedding
+        }
+        Unit
+    }
 }

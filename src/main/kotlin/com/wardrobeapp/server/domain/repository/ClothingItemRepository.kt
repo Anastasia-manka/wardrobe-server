@@ -37,6 +37,7 @@ interface ClothingItemRepository {
         labelIds: List<UUID>
     ): ClothingItem
     fun delete(id: UUID)
+    fun updateEmbedding(id: UUID, embedding: String)
     fun isUsedInOutfitOrTrip(id: UUID): Boolean
     fun createFromTemplates(userId: UUID, templateIds: List<UUID>): List<ClothingItem>
     fun findCompatible(itemId: UUID, categoryGroupId: UUID?): List<ClothingItem>

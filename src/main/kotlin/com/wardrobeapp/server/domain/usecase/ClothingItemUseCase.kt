@@ -77,8 +77,22 @@ class ClothingItemUseCase(
         repository.delete(id)
     }
 
-    fun createFromTemplates(userId: UUID, templateIds: List<UUID>): List<ClothingItem> =
-        repository.createFromTemplates(userId, templateIds)
+    fun createFromTemplates(userId: UUID, templateIds: List<UUID>): List<ClothingItem> {
+        val items = repository.createFromTemplates(userId, templateIds)
+        Thread {
+            items.forEach { item ->
+                try {
+                    val imageBytes = java.net.URI(item.imageUrl).toURL().readBytes()
+                    val vector = embeddingService.computeEmbedding(imageBytes)
+                    val embedding = vector.joinToString(",", "[", "]")
+                    repository.updateEmbedding(item.id, embedding)
+                } catch (e: Exception) {
+                    println("Embedding failed for ${item.id}: ${e.message}")
+                }
+            }
+        }.start()
+        return items
+    }
 
     fun getCompatible(itemId: UUID, userId: UUID, categoryGroupId: UUID?): List<ClothingItem> {
         val item = repository.findById(itemId) ?: throw NoSuchElementException("Item not found")
