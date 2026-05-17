@@ -41,7 +41,7 @@ fun Application.module() {
     val authUseCase = AuthUseCase(userRepository)
     val referenceRepository = ReferenceRepositoryImpl()
     val clothingItemRepository = ClothingItemRepositoryImpl()
-    val clothingItemUseCase = ClothingItemUseCase(clothingItemRepository, embeddingService)
+    val clothingItemUseCase = ClothingItemUseCase(clothingItemRepository, embeddingService, detectionService)
     val outfitRepository = OutfitRepositoryImpl()
     val outfitUseCase = OutfitUseCase(outfitRepository)
     val tripRepository = TripRepositoryImpl()
@@ -64,6 +64,6 @@ fun Application.module() {
         outfitRoutes(outfitUseCase)
         tripRoutes(tripUseCase)
         profileRoutes(userRepository)
-        visualSearchRoutes(clothingItemUseCase, embeddingService, detectionService)
+        visualSearchRoutes(clothingItemUseCase, detectionService)
     }
 }

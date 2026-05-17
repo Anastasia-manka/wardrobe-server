@@ -1,12 +1,16 @@
 package com.wardrobeapp.server.domain.usecase
 
+
 import com.wardrobeapp.server.domain.model.ClothingItem
 import com.wardrobeapp.server.domain.repository.ClothingItemRepository
+import com.wardrobeapp.server.ml.DetectionService
+import com.wardrobeapp.server.ml.EmbeddingService
 import java.util.UUID
 
 class ClothingItemUseCase(
     private val repository: ClothingItemRepository,
-    private val embeddingService: com.wardrobeapp.server.ml.EmbeddingService
+    private val embeddingService: EmbeddingService,
+    private val detectionService: DetectionService
 ) {
 
     fun create(
@@ -23,7 +27,7 @@ class ClothingItemUseCase(
         val embedding = try {
             val encodedUrl = imageUrl.replace(" ", "%20")
             val imageBytes = java.net.URI(encodedUrl).toURL().readBytes()
-            val vector = embeddingService.computeEmbedding(imageBytes)
+            val vector = computeEmbeddingWithDetection(imageBytes)
             vector.joinToString(",", "[", "]")
         } catch (e: Exception) {
             println("Embedding computation failed: ${e.message}")
@@ -83,9 +87,8 @@ class ClothingItemUseCase(
             items.forEach { item ->
                 try {
                     val imageBytes = java.net.URI(item.imageUrl).toURL().readBytes()
-                    val vector = embeddingService.computeEmbedding(imageBytes)
-                    val embedding = vector.joinToString(",", "[", "]")
-                    repository.updateEmbedding(item.id, embedding)
+                    val vector = computeEmbeddingWithDetection(imageBytes)
+                    repository.updateEmbedding(item.id, vector.joinToString(",", "[", "]"))
                 } catch (e: Exception) {
                     println("Embedding failed for ${item.id}: ${e.message}")
                 }
@@ -115,8 +118,10 @@ class ClothingItemUseCase(
     fun deleteCompatibility(itemId: UUID, compatibleItemId: UUID, userId: UUID) {
         repository.deleteCompatibility(itemId, compatibleItemId)
     }
+
     fun findSimilar(userId: UUID, queryEmbedding: FloatArray, topN: Int): List<ClothingItem> =
         repository.findSimilar(userId, queryEmbedding, topN)
+
     fun findSimilarByCategory(
         userId: UUID,
         embedding: FloatArray,
@@ -124,4 +129,16 @@ class ClothingItemUseCase(
         topN: Int
     ): List<ClothingItem> =
         repository.findSimilarByCategory(userId, embedding, categoryGroupName, topN)
+
+    fun computeEmbeddingWithDetection(imageBytes: ByteArray): FloatArray {
+        val detections = detectionService.detect(imageBytes)
+        return if (detections.isNotEmpty()) {
+            val best = detections.maxByOrNull { it.confidence }!!
+            println("Detection: ${best.className} conf=${best.confidence}")
+            embeddingService.computeEmbedding(best.cropBytes)
+        } else {
+            println("No detections, using full image")
+            embeddingService.computeEmbedding(imageBytes)
+        }
+    }
 }

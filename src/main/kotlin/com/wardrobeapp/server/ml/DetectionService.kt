@@ -52,7 +52,12 @@ class DetectionService {
         val boxes = parseOutput(raw, originalImage.width, originalImage.height)
         val filtered = nms(boxes)
 
-        return filtered.map { box ->
+        val deduplicated = filtered
+            .groupBy { it.className }
+            .values
+            .map { group -> group.maxByOrNull { it.confidence }!! }
+
+        return deduplicated.map { box ->
             val crop = cropImage(originalImage, box.x1, box.y1, box.x2, box.y2)
             box.copy(cropBytes = crop)
         }
@@ -136,8 +141,12 @@ class DetectionService {
         val ix2 = x2.toInt().coerceIn(ix1 + 1, image.width)
         val iy2 = y2.toInt().coerceIn(iy1 + 1, image.height)
         val crop = image.getSubimage(ix1, iy1, ix2 - ix1, iy2 - iy1)
+        val rgb = BufferedImage(crop.width, crop.height, BufferedImage.TYPE_INT_RGB)
+        val g = rgb.createGraphics()
+        g.drawImage(crop, 0, 0, null)
+        g.dispose()
         val baos = java.io.ByteArrayOutputStream()
-        ImageIO.write(crop, "jpg", baos)
+        ImageIO.write(rgb, "jpg", baos)
         return baos.toByteArray()
     }
 
