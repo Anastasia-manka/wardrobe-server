@@ -11,6 +11,7 @@ import com.wardrobeapp.server.domain.usecase.AuthUseCase
 import com.wardrobeapp.server.domain.usecase.ClothingItemUseCase
 import com.wardrobeapp.server.domain.usecase.OutfitUseCase
 import com.wardrobeapp.server.domain.usecase.TripUseCase
+import com.wardrobeapp.server.ml.DetectionService
 import com.wardrobeapp.server.ml.EmbeddingService
 import com.wardrobeapp.server.presentation.plugins.configureAuth
 import com.wardrobeapp.server.presentation.plugins.configureCors
@@ -34,6 +35,7 @@ fun Application.module() {
     DatabaseSeeder.seed()
 
     val embeddingService = EmbeddingService()
+    val detectionService = DetectionService()
 
     val userRepository = UserRepositoryImpl()
     val authUseCase = AuthUseCase(userRepository)
@@ -52,6 +54,7 @@ fun Application.module() {
 
     environment.monitor.subscribe(ApplicationStopped) {
         embeddingService.close()
+        detectionService.close()
     }
 
     routing {
@@ -61,6 +64,6 @@ fun Application.module() {
         outfitRoutes(outfitUseCase)
         tripRoutes(tripUseCase)
         profileRoutes(userRepository)
-        visualSearchRoutes(clothingItemUseCase, embeddingService)
+        visualSearchRoutes(clothingItemUseCase, embeddingService, detectionService)
     }
 }

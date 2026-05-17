@@ -45,4 +45,5 @@ interface ClothingItemRepository {
     fun findByOutfitId(outfitId: UUID): List<ClothingItem>
     fun deleteCompatibility(itemId: UUID, compatibleItemId: UUID)
     fun findSimilar(userId: UUID, queryEmbedding: FloatArray, topN: Int): List<ClothingItem>
+    fun findSimilarByCategory(userId: UUID, queryEmbedding: FloatArray, categoryGroupName: String, topN: Int): List<ClothingItem>
 }

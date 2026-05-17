@@ -117,4 +117,11 @@ class ClothingItemUseCase(
     }
     fun findSimilar(userId: UUID, queryEmbedding: FloatArray, topN: Int): List<ClothingItem> =
         repository.findSimilar(userId, queryEmbedding, topN)
+    fun findSimilarByCategory(
+        userId: UUID,
+        embedding: FloatArray,
+        categoryGroupName: String,
+        topN: Int
+    ): List<ClothingItem> =
+        repository.findSimilarByCategory(userId, embedding, categoryGroupName, topN)
 }

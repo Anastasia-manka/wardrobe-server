@@ -11,10 +11,14 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import java.util.UUID
 import com.wardrobeapp.server.presentation.dto.toResponse
+import com.wardrobeapp.server.ml.DetectionService
+import com.wardrobeapp.server.presentation.dto.VisualSearchGroup
+import com.wardrobeapp.server.presentation.dto.VisualSearchResponse
 
 fun Route.visualSearchRoutes(
     clothingItemUseCase: ClothingItemUseCase,
-    embeddingService: EmbeddingService
+    embeddingService: EmbeddingService,
+    detectionService: DetectionService
 ) {
     authenticate("auth-jwt") {
         post("/search/visual") {
@@ -30,9 +34,41 @@ fun Route.visualSearchRoutes(
             }
 
             val bytes = imageBytes ?: throw IllegalArgumentException("MISSING_IMAGE")
-            val queryEmbedding = embeddingService.computeEmbedding(bytes)
-            val results = clothingItemUseCase.findSimilar(userId, queryEmbedding, topN = 10)
-            call.respond(HttpStatusCode.OK, results.map { it.toResponse() })
+
+            val detectedItems = detectionService.detect(bytes)
+
+            if (detectedItems.isEmpty()) {
+                val queryEmbedding = embeddingService.computeEmbedding(bytes)
+                val results = clothingItemUseCase.findSimilar(userId, queryEmbedding, topN = 10)
+                call.respond(HttpStatusCode.OK, VisualSearchResponse(
+                    grouped = false,
+                    items = results.map { it.toResponse() },
+                    groups = emptyList()
+                )
+                )
+                return@post
+            }
+
+            val groups = detectedItems.map { detected ->
+                val cropEmbedding = embeddingService.computeEmbedding(detected.cropBytes)
+                val similar = clothingItemUseCase.findSimilarByCategory(
+                    userId = userId,
+                    embedding = cropEmbedding,
+                    categoryGroupName = detected.className,
+                    topN = 5
+                )
+                VisualSearchGroup(
+                    categoryGroup = detected.className,
+                    confidence = detected.confidence,
+                    items = similar.map { it.toResponse() }
+                )
+            }.filter { it.items.isNotEmpty() }
+
+            call.respond(HttpStatusCode.OK, VisualSearchResponse(
+                grouped = true,
+                items = emptyList(),
+                groups = groups
+            ))
         }
     }
 }

@@ -66,3 +66,16 @@ data class TemplateItemResponse(
     val colorId: String,
     val materialId: String
 )
+@Serializable
+data class VisualSearchGroup(
+    val categoryGroup: String,
+    val confidence: Float,
+    val items: List<ClothingItemResponse>
+)
+
+@Serializable
+data class VisualSearchResponse(
+    val grouped: Boolean,
+    val items: List<ClothingItemResponse>,
+    val groups: List<VisualSearchGroup>
+)

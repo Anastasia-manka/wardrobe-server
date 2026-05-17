@@ -241,4 +241,31 @@ class ClothingItemRepositoryImpl : ClothingItemRepository {
         }
         Unit
     }
+
+    override fun findSimilarByCategory(
+        userId: UUID,
+        queryEmbedding: FloatArray,
+        categoryGroupName: String,
+        topN: Int
+    ): List<ClothingItem> = transaction {
+        val vectorLiteral = queryEmbedding.joinToString(",", "[", "]")
+        exec(
+            """
+        SELECT ci.id FROM clothing_items ci
+        JOIN categories c ON ci.category_id = c.id
+        JOIN category_groups cg ON c.group_id = cg.id
+        WHERE ci.user_id = '$userId'
+        AND ci.embedding IS NOT NULL
+        AND cg.name = '$categoryGroupName'
+        ORDER BY ci.embedding::vector <=> '$vectorLiteral'::vector
+        LIMIT $topN
+        """.trimIndent()
+        ) { rs ->
+            val ids = mutableListOf<UUID>()
+            while (rs.next()) {
+                ids.add(UUID.fromString(rs.getString("id")))
+            }
+            ids
+        }?.mapNotNull { findById(it) } ?: emptyList()
+    }
 }
